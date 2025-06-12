@@ -1,0 +1,76 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from fpdf import FPDF
+from fpdf.enums import XPos, YPos
+#load data
+df = pd.read_csv("STUDENTMARKSDETAILS")
+#analyze and give report
+total_students = len(df)
+average_marks = df['Marks'].mean()
+class_wise_avg = df.groupby("Class")["Marks"].mean()
+class_counts = df["Class"].value_counts()
+#generate charts like bar,pie..etc
+plt.figure(figsize=(5, 3))
+class_wise_avg.plot(kind='bar', color='yellow')
+plt.title('Average Marks by Class')
+plt.xlabel('Class')
+plt.ylabel('Average Marks')
+plt.tight_layout()
+bar_chart = "bar_chart.png"
+plt.savefig(bar_chart)
+plt.close()
+#pie
+plt.figure(figsize=(4, 4))
+class_counts.plot(kind='pie', autopct='%1.1f%%', startangle=90, colors=["#66b3ff", "#99ff99"])
+plt.title('Student Distribution by Class')
+plt.ylabel('')
+plt.tight_layout()
+pie_chart = "pie_chart.png"
+plt.savefig(pie_chart)
+plt.close()
+#create pdf
+pdf = FPDF()
+pdf.add_page()
+pdf.set_font("Helvetica", 'B', 16)
+#caption/title
+pdf.cell(0, 10, "Student Performance Report", align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.ln(10)
+
+pdf.set_font("Helvetica", '', 12)
+pdf.cell(0, 10, f"Total Students: {total_students}",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.cell(0, 10, f"Average Marks: {average_marks:.2f}",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.ln(5)
+#stats-classwise
+pdf.set_font("Helvetica", 'B', 12)
+pdf.cell(0, 10, "Class-wise Average Marks:",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.set_font("Helvetica", '', 12)
+for cls, avg in class_wise_avg.items():
+    pdf.cell(0, 10, f"Class {cls}: {avg:.2f}",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+#BAR
+pdf.ln(10)
+pdf.set_font("Helvetica", 'B', 12)
+pdf.cell(0, 10, "Average Marks by Class:",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.image(bar_chart, x=30, w=150)
+pdf.ln(10)
+#PIE
+pdf.cell(0, 10, "Student Distribution by Class:",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.image(pie_chart, x=40, w=130)
+pdf.ln(10)
+# Student Table
+pdf.set_font("Helvetica", 'B', 12)
+pdf.cell(0, 10, "Student Details",  new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+pdf.set_font("Helvetica", 'B', 11)
+pdf.cell(60, 8, "Name", 1)
+pdf.cell(40, 8, "Class", 1)
+pdf.cell(40, 8, "Marks", 1)
+pdf.ln()
+
+pdf.set_font("Helvetica", '', 11)
+for index, row in df.iterrows():
+    pdf.cell(60, 8, row["Name"], 1)
+    pdf.cell(40, 8, str(row["Class"]), 1)
+    pdf.cell(40, 8, str(row["Marks"]), 1)
+    pdf.ln()
+# Save PDF
+pdf.output("student_marks_details_fpdf.pdf")
+print("'student_marks_details_fpdf.pdf' created successfully.")
